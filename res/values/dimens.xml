@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="paddingItemsSidebarLog">20dp</dimen>
+    <dimen name="stdpadding">8dp</dimen>
+    <bool name="logSildersAlwaysVisible">false</bool>
+    <dimen name="margin_top_bt_disconnect">100dp</dimen>
+    <dimen name="connection_text">26dp</dimen>
+    <dimen name="ping_image">5dp</dimen>
+    <dimen name="ping_image_left">2dp</dimen>
+
+</resources>
