@@ -5,27 +5,33 @@ import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.VpnService;
-import android.os.*;
+import android.os.Binder;
+import android.os.Build;
 import android.os.Handler.Callback;
+import android.os.IBinder;
+import android.os.Message;
+import android.os.ParcelFileDescriptor;
 import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
-import com.ecomdev.openvpn.activities.DisconnectVPN;
-import com.ecomdev.openvpn.activities.LogWindow;
+import com.ecomdev.openvpn.Constants;
 import com.ecomdev.openvpn.R;
 import com.ecomdev.openvpn.VpnProfile;
+import com.ecomdev.openvpn.activities.DisconnectVPN;
+import com.ecomdev.openvpn.activities.LogWindow;
 import com.ecomdev.openvpn.core.VpnStatus.ByteCountListener;
 import com.ecomdev.openvpn.core.VpnStatus.ConnectionStatus;
 import com.ecomdev.openvpn.core.VpnStatus.StateListener;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -33,8 +39,9 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Vector;
 
-import static com.ecomdev.openvpn.core.NetworkSpace.*;
-import static com.ecomdev.openvpn.core.VpnStatus.ConnectionStatus.*;
+import static com.ecomdev.openvpn.core.VpnStatus.ConnectionStatus.LEVEL_CONNECTED;
+import static com.ecomdev.openvpn.core.VpnStatus.ConnectionStatus.LEVEL_CONNECTING_NO_SERVER_REPLY_YET;
+import static com.ecomdev.openvpn.core.VpnStatus.ConnectionStatus.LEVEL_WAITING_FOR_USER_INPUT;
 
 public class OpenVpnService extends VpnService implements StateListener, Callback, ByteCountListener {
     public static final String START_SERVICE = "com.ecomdev.openvpn.START_SERVICE";
@@ -376,10 +383,26 @@ public class OpenVpnService extends VpnService implements StateListener, Callbac
         registerDeviceStateReceiver(mManagement);
 
 
+        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(mReceiver, new IntentFilter(Constants.TIMER_MESSAGE));
+
         ProfileManager.setConnectedVpnProfile(this, mProfile);
 
         return START_NOT_STICKY;
     }
+
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final int demoHours = getResources().getInteger(R.integer.demoTime);
+            int leftHours = intent.getIntExtra(Constants.LEFT_HOURS, demoHours);
+            if (leftHours == 0) {
+                ProfileManager.setConntectedVpnProfileDisconnected(getApplicationContext());
+                getManagement().stopVPN();
+            }
+
+        }
+    };
+
 
     private OpenVPNManagement instantiateOpenVPN3Core() {
         return null;
@@ -397,6 +420,8 @@ public class OpenVpnService extends VpnService implements StateListener, Callbac
         }
         // Just in case unregister for state
         VpnStatus.removeStateListener(this);
+
+        LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(mReceiver);
 
     }
 

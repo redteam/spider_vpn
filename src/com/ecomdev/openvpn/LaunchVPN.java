@@ -13,7 +13,6 @@ import android.net.VpnService;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.InputType;
-import android.text.TextUtils;
 import android.text.method.PasswordTransformationMethod;
 import android.view.View;
 import android.widget.*;
@@ -183,13 +182,19 @@ public class LaunchVPN extends Activity {
 			if(resultCode == Activity.RESULT_OK) {
 				int needpw = mSelectedProfile.needUserPWInput();
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-                boolean isTestLogin = prefs.getBoolean("isTestLogin", true);
-				if(!isTestLogin && needpw !=0) {
+                boolean isTimeOut = prefs.getBoolean(Constants.PREF_IS_TIMEOUT, false);
+                boolean isDemo = prefs.getBoolean(Constants.PREF_IS_DEMO, true);
+                if (isDemo && isTimeOut) {
+                    mSelectedProfile.mUsername = "";
+                    mSelectedProfile.mTransientPW = "";
+                }
+
+                if(isTimeOut && needpw !=0) {
 					VpnStatus.updateStateString("USER_VPN_PASSWORD", "", R.string.state_user_vpn_password,
                             ConnectionStatus.LEVEL_WAITING_FOR_USER_INPUT);
 					askForPW(needpw);
 				} else {
-					if (isTestLogin) {
+					if (!isTimeOut) {
                         mSelectedProfile.mUsername = "test";
                         mSelectedProfile.mTransientPW = "test";
                     }

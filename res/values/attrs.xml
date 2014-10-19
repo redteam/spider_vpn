@@ -8,5 +8,5 @@
    </declare-styleable>
 
     <!--time in hour-->
-    <integer name="demoTime">24</integer>
+    <integer name="demoTime">6</integer>
 </resources>

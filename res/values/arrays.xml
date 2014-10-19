@@ -24,5 +24,4 @@
         <item>Unlimited reconnection retries</item>
     </string-array>
     
-    <integer name="demoHours">48</integer>
 </resources>

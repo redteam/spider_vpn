@@ -12,6 +12,9 @@ import android.os.Handler;
 import android.os.Handler.Callback;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.SystemClock;
+import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.text.SpannableString;
 import android.text.format.DateFormat;
 import android.text.style.ImageSpan;
@@ -40,7 +43,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
 
-import static android.content.Context.MODE_PRIVATE;
 import static com.ecomdev.openvpn.core.OpenVpnService.humanReadableByteCount;
 
 public class LogFragment extends ListFragment implements StateListener, SeekBar.OnSeekBarChangeListener, RadioGroup.OnCheckedChangeListener, VpnStatus.ByteCountListener {
@@ -48,6 +50,7 @@ public class LogFragment extends ListFragment implements StateListener, SeekBar.
 	private static final int START_VPN_CONFIG = 0;
     private static final String VERBOSITYLEVEL = "verbositylevel";
     private static final String TIMER_NAME = "Loading";
+    private static final int sRepeatTime = 1000 * 10;
 
     protected OpenVpnService mService;
 	private ServiceConnection mConnection = new ServiceConnection() {
@@ -78,6 +81,7 @@ public class LogFragment extends ListFragment implements StateListener, SeekBar.
     private boolean mShowOptionsLayout;
     private Timer mTimer;
     private boolean mIsTimerRun = false;
+    private MenuItem mDemoTimeMenuItem;
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -499,6 +503,8 @@ public class LogFragment extends ListFragment implements StateListener, SeekBar.
 		inflater.inflate(R.menu.logmenu, menu);
         if (getResources().getBoolean(R.bool.logSildersAlwaysVisible))
             menu.removeItem(R.id.toggle_time);
+
+        mDemoTimeMenuItem = menu.findItem(R.id.menuDemoTime);
 	}
 
 
@@ -633,6 +639,9 @@ public class LogFragment extends ListFragment implements StateListener, SeekBar.
         });
         if (mShowOptionsLayout)
             mOptionsLayout.setVisibility(View.VISIBLE);
+
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mReceiver, new IntentFilter(Constants.TIMER_MESSAGE));
+
         return v;
     }
 
@@ -764,19 +773,18 @@ public class LogFragment extends ListFragment implements StateListener, SeekBar.
     private void startDemoTime(int resId) {
         switch (resId) {
             case R.string.state_connected:
-                SharedPreferences preferences = getActivity().getSharedPreferences(Constants.sMAIN_SHARED_PREFERENCE, MODE_PRIVATE);
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
                 SharedPreferences.Editor edit = preferences.edit();
-                edit.putLong(Constants.sPREF_START_DEMO_TIME, System.currentTimeMillis());
-                edit.putInt(Constants.sPREF_LEFT_HOURS, getResources().getInteger(R.integer.demoHours));
+                edit.putInt(Constants.PREF_LEFT_HOURS, getResources().getInteger(R.integer.demoTime));
+                edit.commit();
 
-                boolean isDemo = preferences.getBoolean(Constants.sPREF_IS_DEMO, true);
-                boolean isTimeOut = preferences.getBoolean(Constants.sPREF_IS_TIMEOUT, false);
+                boolean isDemo = preferences.getBoolean(Constants.PREF_IS_DEMO, true);
+                boolean isTimeOut = preferences.getBoolean(Constants.PREF_IS_TIMEOUT, false);
                 if (isDemo && !isTimeOut) {
                     Intent intent = new Intent(getActivity(), UpdateDemoTimeReceiver.class);
-                    PendingIntent broadcast = PendingIntent.getBroadcast(getActivity(), Constants.sUPDATE_DEMO_TIME_RECEIVER_NUM, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                    PendingIntent broadcast = PendingIntent.getBroadcast(getActivity(), Constants.UPDATE_DEMO_TIME_RECEIVER_NUM, intent, PendingIntent.FLAG_UPDATE_CURRENT);
                     AlarmManager alarmManager = (AlarmManager) getActivity().getSystemService(Context.ALARM_SERVICE);
-//                alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), AlarmManager.INTERVAL_HOUR, broadcast);
-                    alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, System.currentTimeMillis() + 1000*60, 1000*60, broadcast);
+                    alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, SystemClock.elapsedRealtime() + sRepeatTime, sRepeatTime, broadcast);
                 }
 
                 break;
@@ -788,6 +796,26 @@ public class LogFragment extends ListFragment implements StateListener, SeekBar.
     public void onDestroy() {
 		VpnStatus.removeLogListener(ladapter);
 		super.onDestroy();
+        LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mReceiver);
 	}
+
+    private void updateDemoHours(int hour) {
+        View actionView = mDemoTimeMenuItem.getActionView();
+        TextView timeView = (TextView) actionView.findViewById(R.id.demoTime);
+        timeView.setText(hour + "h");
+    }
+
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final int demoHours = getResources().getInteger(R.integer.demoTime);
+            int leftHours = intent.getIntExtra(Constants.LEFT_HOURS, demoHours);
+            if (leftHours == 0) {
+                getActivity().finish();
+            }
+
+            updateDemoHours(leftHours);
+        }
+    };
 
 }

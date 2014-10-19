@@ -315,4 +315,7 @@
     <string name="ping_servers">Find Fastest server for me</string>
     <string name="fastest_server">Fastest for you</string>
     <string name="disconnected">Disconnected</string>
+    <string name="demo_hours">24h</string>
+    <string name="title_demo_dialog">Title</string>
+    <string name="message_demo_dialog">Message</string>
 </resources>

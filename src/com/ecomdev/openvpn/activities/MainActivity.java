@@ -3,58 +3,48 @@ package com.ecomdev.openvpn.activities;
 import android.app.ActionBar;
 import android.app.ActionBar.Tab;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import com.ecomdev.openvpn.Constants;
-import com.ecomdev.openvpn.DemoService;
 import com.ecomdev.openvpn.R;
 import com.ecomdev.openvpn.core.OpenVpnService;
-import com.ecomdev.openvpn.core.ProfileManager;
-import com.ecomdev.openvpn.fragments.*;
+import com.ecomdev.openvpn.fragments.AboutFragment;
+import com.ecomdev.openvpn.fragments.LogFragment;
+import com.ecomdev.openvpn.fragments.SendDumpFragment;
+import com.ecomdev.openvpn.fragments.VPNProfileList;
 
 
-public class MainActivity extends Activity implements DemoService.UpdateTimeListener {
+public class MainActivity extends Activity {
 
     private MenuItem mDemoTimeMenuItem;
-    protected OpenVpnService mService;
 
-    private ServiceConnection mConnection = new ServiceConnection() {
-
-
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
-        public void onServiceConnected(ComponentName className,
-                                       IBinder service) {
-            // We've bound to LocalService, cast the IBinder and get LocalService instance
-            OpenVpnService.LocalBinder binder = (OpenVpnService.LocalBinder) service;
-            mService = binder.getService();
-
-            ProfileManager.setConntectedVpnProfileDisconnected(MainActivity.this);
-            if (mService != null && mService.getManagement() != null) {
-                mService.getManagement().stopVPN();
+        public void onReceive(Context context, Intent intent) {
+            final int demoHours = getResources().getInteger(R.integer.demoTime);
+            int leftHours = intent.getIntExtra(Constants.LEFT_HOURS, demoHours);
+            if (leftHours == 0) {
+                timeOut();
             }
 
-            unbindService(mConnection);
+            updateDemoHours(leftHours);
         }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            mService =null;
-        }
-
     };
 
-	protected void onCreate(android.os.Bundle savedInstanceState) {
+    protected void onCreate(android.os.Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		ActionBar bar = getActionBar();
 		bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
@@ -86,27 +76,26 @@ public class MainActivity extends Activity implements DemoService.UpdateTimeList
 			bar.addTab(sendDump);
 		}
 
-        startDemoService();
+        LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, new IntentFilter(Constants.TIMER_MESSAGE));
 	}
 
-    private void startDemoService() {
-
-    }
-
-    @Override
-    public void updateDemoHours() {
+    private void updateDemoHours(int hour) {
         View actionView = mDemoTimeMenuItem.getActionView();
         TextView timeView = (TextView) actionView.findViewById(R.id.demoTime);
-        SharedPreferences preferences = getSharedPreferences(Constants.sMAIN_SHARED_PREFERENCE, MODE_PRIVATE);
-        int defaultTime = getResources().getInteger(R.integer.demoHours);
-        timeView.setText(preferences.getInt(Constants.sPREF_LEFT_HOURS, defaultTime) + "h");
+        timeView.setText(hour + "h");
+    }
+
+    private void timeOut() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(R.string.message_demo_dialog).setTitle(R.string.title_demo_dialog);
+        builder.create();
+        builder.show();
     }
 
     @Override
-    public void timeOut() {
-        Intent intent = new Intent(this, OpenVpnService.class);
-        intent.setAction(OpenVpnService.START_SERVICE);
-        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+    protected void onDestroy() {
+        super.onDestroy();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mReceiver);
     }
 
     protected class TabListener<T extends Fragment> implements ActionBar.TabListener

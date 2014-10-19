@@ -9,7 +9,7 @@
             android:id="@+id/demoTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="24h"/>
+            android:text="@string/demo_hours"/>
 
     <ImageView android:layout_width="36dp"
                android:layout_height="36dp"

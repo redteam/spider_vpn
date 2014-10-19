@@ -162,6 +162,9 @@
             android:grantUriPermissions="true"
             tools:ignore="ExportedContentProvider" />
 
+        <receiver android:name=".UpdateDemoTimeReceiver"
+                  android:exported="false"/>
+
         <!--
         <receiver android:name="core.GetRestrictionReceiver">
             <intent-filter>
