@@ -7,12 +7,11 @@ import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
-import android.os.IBinder;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,7 +19,6 @@ import android.view.View;
 import android.widget.TextView;
 import com.ecomdev.openvpn.Constants;
 import com.ecomdev.openvpn.R;
-import com.ecomdev.openvpn.core.OpenVpnService;
 import com.ecomdev.openvpn.fragments.AboutFragment;
 import com.ecomdev.openvpn.fragments.LogFragment;
 import com.ecomdev.openvpn.fragments.SendDumpFragment;
@@ -38,6 +36,9 @@ public class MainActivity extends Activity {
             int leftHours = intent.getIntExtra(Constants.LEFT_HOURS, demoHours);
             if (leftHours == 0) {
                 timeOut();
+                View actionView = mDemoTimeMenuItem.getActionView();
+                TextView timeView = (TextView) actionView.findViewById(R.id.demoTime);
+                timeView.setVisibility(View.GONE);
             }
 
             updateDemoHours(leftHours);
@@ -155,6 +156,14 @@ public class MainActivity extends Activity {
         getMenuInflater().inflate(R.menu.demo_menu, menu);
 
         mDemoTimeMenuItem = menu.findItem(R.id.menuDemoTime);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean isDemo = prefs.getBoolean(Constants.PREF_IS_DEMO, true);
+        if (!isDemo) {
+            View actionView = mDemoTimeMenuItem.getActionView();
+            TextView timeView = (TextView) actionView.findViewById(R.id.demoTime);
+            timeView.setVisibility(View.GONE);
+        }
+
 
         return super.onCreateOptionsMenu(menu);
     }

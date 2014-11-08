@@ -119,9 +119,13 @@ public class LaunchVPN extends Activity {
 		dialog.setTitle("Need " + getString(type));
 		dialog.setMessage("Enter the password for profile " + mSelectedProfile.mName);
 
+		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         if (type == R.string.password) {
-            ((EditText)userpwlayout.findViewById(R.id.username)).setText(mSelectedProfile.mUsername);
-            ((EditText)userpwlayout.findViewById(R.id.password)).setText(mSelectedProfile.mPassword);
+			boolean isDemo = prefs.getBoolean(Constants.PREF_IS_DEMO, true);
+			if (!isDemo) {
+				((EditText) userpwlayout.findViewById(R.id.username)).setText(mSelectedProfile.mUsername);
+			}
+//            ((EditText)userpwlayout.findViewById(R.id.password)).setText(mSelectedProfile.mPassword);
             //((CheckBox)userpwlayout.findViewById(R.id.save_password)).setChecked(!TextUtils.isEmpty(mSelectedProfile.mPassword));
             ((CheckBox)userpwlayout.findViewById(R.id.show_password)).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
@@ -156,7 +160,11 @@ public class LaunchVPN extends Activity {
                         } else {
                             mSelectedProfile.mTransientPCKS12PW = entry.getText().toString();
                         }
-                        onActivityResult(START_VPN_PROFILE, Activity.RESULT_OK, null);
+
+						SharedPreferences.Editor edit = prefs.edit();
+						edit.putBoolean(Constants.PREF_IS_DEMO, false);
+						edit.commit();
+						onActivityResult(START_VPN_PROFILE, Activity.RESULT_OK, null);
 
                     }
 
@@ -183,11 +191,6 @@ public class LaunchVPN extends Activity {
 				int needpw = mSelectedProfile.needUserPWInput();
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
                 boolean isTimeOut = prefs.getBoolean(Constants.PREF_IS_TIMEOUT, false);
-                boolean isDemo = prefs.getBoolean(Constants.PREF_IS_DEMO, true);
-                if (isDemo && isTimeOut) {
-                    mSelectedProfile.mUsername = "";
-                    mSelectedProfile.mTransientPW = "";
-                }
 
                 if(isTimeOut && needpw !=0) {
 					VpnStatus.updateStateString("USER_VPN_PASSWORD", "", R.string.state_user_vpn_password,

@@ -397,7 +397,9 @@ public class OpenVpnService extends VpnService implements StateListener, Callbac
             int leftHours = intent.getIntExtra(Constants.LEFT_HOURS, demoHours);
             if (leftHours == 0) {
                 ProfileManager.setConntectedVpnProfileDisconnected(getApplicationContext());
-                getManagement().stopVPN();
+                if (mManagement != null) {
+                    mManagement.stopVPN();
+                }
             }
 
         }

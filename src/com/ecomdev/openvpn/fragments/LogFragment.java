@@ -505,6 +505,13 @@ public class LogFragment extends ListFragment implements StateListener, SeekBar.
             menu.removeItem(R.id.toggle_time);
 
         mDemoTimeMenuItem = menu.findItem(R.id.menuDemoTime);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        boolean isDemo = prefs.getBoolean(Constants.PREF_IS_DEMO, true);
+        if (!isDemo) {
+            View actionView = mDemoTimeMenuItem.getActionView();
+            TextView timeView = (TextView) actionView.findViewById(R.id.demoTime);
+            timeView.setVisibility(View.GONE);
+        }
 	}
 
 
@@ -721,9 +728,7 @@ public class LogFragment extends ListFragment implements StateListener, SeekBar.
 
                 break;
 
-            case R.string.state_user_vpn_password:
-            case R.string.state_nonetwork:
-            case R.string.speed_waiting:
+            default:
                 if (mTimer == null) {
                     startLoading();
                 }

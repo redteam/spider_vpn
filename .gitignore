@@ -81,3 +81,6 @@ out/*
 
 .DS_Store
 /gen
+/gradle
+/gradlew
+/gradlew.bat
