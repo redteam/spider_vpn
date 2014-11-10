@@ -507,7 +507,11 @@ public class LogFragment extends ListFragment implements StateListener, SeekBar.
         mDemoTimeMenuItem = menu.findItem(R.id.menuDemoTime);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         boolean isDemo = prefs.getBoolean(Constants.PREF_IS_DEMO, true);
-        if (!isDemo) {
+        boolean isTimeOut = prefs.getBoolean(Constants.PREF_IS_TIMEOUT, false);
+        boolean isUserLogged = prefs.getBoolean(Constants.PREF_USER_LOGGED, false);
+        if (isUserLogged && !isDemo) {
+           mDemoTimeMenuItem.setVisible(false);
+        } else if (isTimeOut) {
             View actionView = mDemoTimeMenuItem.getActionView();
             TextView timeView = (TextView) actionView.findViewById(R.id.demoTime);
             timeView.setVisibility(View.GONE);
@@ -678,6 +682,7 @@ public class LogFragment extends ListFragment implements StateListener, SeekBar.
 
                 @Override
                 public void run() {
+                    hideDemoIcon(resId);
                     setEnableDisconnectedButtonByState(resId);
                     startDemoTime(resId);
 
@@ -696,6 +701,21 @@ public class LogFragment extends ListFragment implements StateListener, SeekBar.
 
                 }
             });
+        }
+    }
+
+    private void hideDemoIcon(int resId) {
+        switch (resId) {
+            case R.string.state_connected:
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                boolean isDemo = preferences.getBoolean(Constants.PREF_IS_DEMO, true);
+                if (!isDemo) {
+                    SharedPreferences.Editor edit = preferences.edit();
+                    edit.putBoolean(Constants.PREF_USER_LOGGED, true);
+                    edit.commit();
+                    mDemoTimeMenuItem.setVisible(false);
+                }
+                break;
         }
     }
 

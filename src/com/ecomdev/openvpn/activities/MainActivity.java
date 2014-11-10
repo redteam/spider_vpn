@@ -154,11 +154,15 @@ public class MainActivity extends Activity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.demo_menu, menu);
-
         mDemoTimeMenuItem = menu.findItem(R.id.menuDemoTime);
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean isTimeOut = prefs.getBoolean(Constants.PREF_IS_TIMEOUT, false);
         boolean isDemo = prefs.getBoolean(Constants.PREF_IS_DEMO, true);
-        if (!isDemo) {
+        boolean isUserLogged = prefs.getBoolean(Constants.PREF_USER_LOGGED, false);
+        if (isUserLogged && !isDemo) {
+            mDemoTimeMenuItem.setVisible(false);
+        } else if (isTimeOut) {
             View actionView = mDemoTimeMenuItem.getActionView();
             TextView timeView = (TextView) actionView.findViewById(R.id.demoTime);
             timeView.setVisibility(View.GONE);
