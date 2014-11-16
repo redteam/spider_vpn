@@ -13,6 +13,8 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
+import android.text.Html;
+import android.text.method.LinkMovementMethod;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -88,7 +90,12 @@ public class MainActivity extends Activity {
 
     private void timeOut() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(R.string.message_demo_dialog).setTitle(R.string.title_demo_dialog);
+        builder.setTitle(R.string.title_demo_dialog);
+        View view = getLayoutInflater().inflate(R.layout.dialog_trial, null);
+        TextView textView = (TextView) view.findViewById(R.id.trial_dialog_body);
+        textView.setText(Html.fromHtml(getString(R.string.trial_dialog_links)));
+        textView.setMovementMethod(LinkMovementMethod.getInstance());
+        builder.setView(view);
         builder.create();
         builder.show();
     }

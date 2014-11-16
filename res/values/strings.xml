@@ -317,5 +317,11 @@
     <string name="disconnected">Disconnected</string>
     <string name="demo_hours">24h</string>
     <string name="title_demo_dialog">Trial period was expired.</string>
-    <string name="message_demo_dialog">Thank you for using Spider VPN! \nUnfortunately, Your trial period was expired. \nNow  you can select your Spider VPN plan:</string>
+    <string name="trial_dialog_message">Thank you for using Spider VPN! \nUnfortunately, Your trial period was expired. \nNow  you can select your Spider VPN plan:</string>
+    <string name="trial_dialog_links"><![CDATA[
+                                      <a href="https://secure.payproglobal.com/orderpage.aspx?products=163355"> Spider VPN 1 week</a> <br/>
+                                      <a href="https://secure.payproglobal.com/orderpage.aspx?products=163358">Spider VPN 1 month</a><br/>
+                                      <a href="https://secure.payproglobal.com/orderpage.aspx?products=163361">Spider VPN 3 months</a><br/>
+                                      <a href="https://secure.payproglobal.com/orderpage.aspx?products=163364">Spider VPN 6 months</a><br/>
+                                      <a href="https://secure.payproglobal.com/orderpage.aspx?products=163367">Spider VPN 1 year</a>]]></string>
 </resources>
