@@ -7,6 +7,7 @@ public class Constants {
 
     public static final int UPDATE_DEMO_TIME_RECEIVER_NUM = 24442;
     public static final String PREF_IS_DEMO = "isDemo";
+    public static final String PREF_IS_DEMO_RUNNING = "isDemoRunning";
     public static final String PREF_IS_TIMEOUT = "isTimeOut";
     public static final String PREF_LEFT_HOURS = "leftHours";
     public static final String PREF_USER_LOGGED = "userLogged";

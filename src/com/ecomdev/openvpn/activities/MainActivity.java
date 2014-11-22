@@ -167,6 +167,14 @@ public class MainActivity extends Activity {
         boolean isTimeOut = prefs.getBoolean(Constants.PREF_IS_TIMEOUT, false);
         boolean isDemo = prefs.getBoolean(Constants.PREF_IS_DEMO, true);
         boolean isUserLogged = prefs.getBoolean(Constants.PREF_USER_LOGGED, false);
+        if (isDemo) {
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            int hour = preferences.getInt(Constants.PREF_LEFT_HOURS, getResources().getInteger(R.integer.demoTime));
+            View actionView = mDemoTimeMenuItem.getActionView();
+            TextView timeView = (TextView) actionView.findViewById(R.id.demoTime);
+            timeView.setText(hour + "h");
+        }
+
         if (isUserLogged && !isDemo) {
             mDemoTimeMenuItem.setVisible(false);
         } else if (isTimeOut) {

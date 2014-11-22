@@ -509,6 +509,14 @@ public class LogFragment extends ListFragment implements StateListener, SeekBar.
         boolean isDemo = prefs.getBoolean(Constants.PREF_IS_DEMO, true);
         boolean isTimeOut = prefs.getBoolean(Constants.PREF_IS_TIMEOUT, false);
         boolean isUserLogged = prefs.getBoolean(Constants.PREF_USER_LOGGED, false);
+        if (isDemo) {
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            int hour = preferences.getInt(Constants.PREF_LEFT_HOURS, getResources().getInteger(R.integer.demoTime));
+            View actionView = mDemoTimeMenuItem.getActionView();
+            TextView timeView = (TextView) actionView.findViewById(R.id.demoTime);
+            timeView.setText(hour + "h");
+        }
+
         if (isUserLogged && !isDemo) {
            mDemoTimeMenuItem.setVisible(false);
         } else if (isTimeOut) {
@@ -799,13 +807,15 @@ public class LogFragment extends ListFragment implements StateListener, SeekBar.
         switch (resId) {
             case R.string.state_connected:
                 SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                SharedPreferences.Editor edit = preferences.edit();
-                edit.putInt(Constants.PREF_LEFT_HOURS, getResources().getInteger(R.integer.demoTime));
-                edit.commit();
-
                 boolean isDemo = preferences.getBoolean(Constants.PREF_IS_DEMO, true);
                 boolean isTimeOut = preferences.getBoolean(Constants.PREF_IS_TIMEOUT, false);
-                if (isDemo && !isTimeOut) {
+                boolean isDemoRunning = preferences.getBoolean(Constants.PREF_IS_DEMO_RUNNING, false);
+                if (!isDemoRunning && isDemo && !isTimeOut) {
+                    SharedPreferences.Editor edit = preferences.edit();
+                    edit.putInt(Constants.PREF_LEFT_HOURS, getResources().getInteger(R.integer.demoTime));
+                    edit.putBoolean(Constants.PREF_IS_DEMO_RUNNING, true);
+                    edit.commit();
+
                     Intent intent = new Intent(getActivity(), UpdateDemoTimeReceiver.class);
                     PendingIntent broadcast = PendingIntent.getBroadcast(getActivity(), Constants.UPDATE_DEMO_TIME_RECEIVER_NUM, intent, PendingIntent.FLAG_UPDATE_CURRENT);
                     AlarmManager alarmManager = (AlarmManager) getActivity().getSystemService(Context.ALARM_SERVICE);
