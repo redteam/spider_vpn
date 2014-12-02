@@ -6,6 +6,42 @@
               android:orientation="vertical"
               tools:context=".LogWindow">
 
+    <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="20dp">
+        <TextView
+                android:text="@string/speed_waiting"
+                android:singleLine="true"
+                android:id="@+id/speed"
+                tools:ignore="InconsistentLayout"
+                android:layout_centerHorizontal="true"
+                android:textSize="@dimen/connection_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+        <TextView
+                android:singleLine="true"
+                android:id="@+id/load"
+                tools:ignore="InconsistentLayout"
+                android:textSize="@dimen/connection_text"
+                android:layout_toRightOf="@id/speed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+    </RelativeLayout>
+
+
+
+    <Button
+            android:id="@+id/logFragmentDisconnect"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/state_disconnected"
+            android:enabled="false"
+            android:layout_marginTop="@dimen/margin_top_bt_disconnect"/>
+
     <LinearLayout
             android:layout_height="wrap_content"
             android:layout_width="match_parent">
