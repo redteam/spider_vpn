@@ -21,7 +21,7 @@ public class UpdateDemoTimeReceiver extends BroadcastReceiver {
         leftHours--;
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt(Constants.PREF_LEFT_HOURS, leftHours);
-        if (leftHours == 0) {
+        if (leftHours <= 0) {
             Intent timeIntent = new Intent(context, UpdateDemoTimeReceiver.class);
             PendingIntent broadcast = PendingIntent.getBroadcast(context, Constants.UPDATE_DEMO_TIME_RECEIVER_NUM, timeIntent, PendingIntent.FLAG_UPDATE_CURRENT);
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);

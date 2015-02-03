@@ -12,7 +12,6 @@ import android.os.Handler;
 import android.os.Handler.Callback;
 import android.os.IBinder;
 import android.os.Message;
-import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.SpannableString;
@@ -36,6 +35,7 @@ import com.ecomdev.openvpn.core.ProfileManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Locale;
@@ -509,21 +509,10 @@ public class LogFragment extends ListFragment implements StateListener, SeekBar.
         boolean isDemo = prefs.getBoolean(Constants.PREF_IS_DEMO, true);
         boolean isTimeOut = prefs.getBoolean(Constants.PREF_IS_TIMEOUT, false);
         boolean isUserLogged = prefs.getBoolean(Constants.PREF_USER_LOGGED, false);
-        if (isDemo) {
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            int hour = preferences.getInt(Constants.PREF_LEFT_HOURS, getResources().getInteger(R.integer.demoTime));
-            View actionView = mDemoTimeMenuItem.getActionView();
-            TextView timeView = (TextView) actionView.findViewById(R.id.demoTime);
-            timeView.setText(hour + "h");
+        if (!isTimeOut && isUserLogged && isDemo) {
+            showDemoIcon();
         }
 
-        if (isUserLogged && !isDemo) {
-           mDemoTimeMenuItem.setVisible(false);
-        } else if (isTimeOut) {
-            View actionView = mDemoTimeMenuItem.getActionView();
-            TextView timeView = (TextView) actionView.findViewById(R.id.demoTime);
-            timeView.setVisibility(View.GONE);
-        }
 	}
 
 
@@ -717,14 +706,24 @@ public class LogFragment extends ListFragment implements StateListener, SeekBar.
             case R.string.state_connected:
                 SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
                 boolean isDemo = preferences.getBoolean(Constants.PREF_IS_DEMO, true);
-                if (!isDemo) {
+                if (isDemo) {
                     SharedPreferences.Editor edit = preferences.edit();
                     edit.putBoolean(Constants.PREF_USER_LOGGED, true);
                     edit.commit();
-                    mDemoTimeMenuItem.setVisible(false);
+//                    mDemoTimeMenuItem.setVisible(true);
+                    showDemoIcon();
                 }
                 break;
         }
+    }
+
+    private void showDemoIcon() {
+            mDemoTimeMenuItem.setVisible(true);
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            int hour = preferences.getInt(Constants.PREF_LEFT_HOURS, getResources().getInteger(R.integer.demoTime));
+            View actionView = mDemoTimeMenuItem.getActionView();
+            TextView timeView = (TextView) actionView.findViewById(R.id.demoTime);
+            timeView.setText(hour + "h");
     }
 
     private void setEnableDisconnectedButtonByState(int resId) {
@@ -812,19 +811,28 @@ public class LogFragment extends ListFragment implements StateListener, SeekBar.
                 boolean isDemoRunning = preferences.getBoolean(Constants.PREF_IS_DEMO_RUNNING, false);
                 if (!isDemoRunning && isDemo && !isTimeOut) {
                     SharedPreferences.Editor edit = preferences.edit();
-                    edit.putInt(Constants.PREF_LEFT_HOURS, getResources().getInteger(R.integer.demoTime));
                     edit.putBoolean(Constants.PREF_IS_DEMO_RUNNING, true);
                     edit.commit();
 
                     Intent intent = new Intent(getActivity(), UpdateDemoTimeReceiver.class);
                     PendingIntent broadcast = PendingIntent.getBroadcast(getActivity(), Constants.UPDATE_DEMO_TIME_RECEIVER_NUM, intent, PendingIntent.FLAG_UPDATE_CURRENT);
                     AlarmManager alarmManager = (AlarmManager) getActivity().getSystemService(Context.ALARM_SERVICE);
-                    alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, SystemClock.elapsedRealtime() + sRepeatTime, sRepeatTime, broadcast);
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.setTimeInMillis(System.currentTimeMillis() + getTimeToTimerStart());
+                    alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), Constants.ONE_HOUR, broadcast);
                 }
 
                 break;
 
         }
+    }
+
+    private int getTimeToTimerStart() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        int leftTime = preferences.getInt(Constants.PREF_LEFT_TIME, getResources().getInteger(R.integer.demoTime) * Constants.ONE_HOUR);
+        int timeToStart = leftTime % Constants.ONE_HOUR;
+
+        return timeToStart;
     }
 
 	@Override

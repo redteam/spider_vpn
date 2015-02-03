@@ -4,15 +4,20 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListFragment;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.telephony.TelephonyManager;
 import android.text.Html;
 import android.text.Html.ImageGetter;
+import android.util.Log;
 import android.view.*;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
@@ -22,12 +27,21 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.android.volley.DefaultRetryPolicy;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.ecomdev.openvpn.*;
 import com.ecomdev.openvpn.activities.ConfigConverter;
 import com.ecomdev.openvpn.activities.FileSelect;
 import com.ecomdev.openvpn.activities.VPNPreferences;
 import com.ecomdev.openvpn.core.ProfileManager;
 import com.ecomdev.openvpn.core.VpnStatus;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -36,7 +50,6 @@ import java.lang.Process;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -64,6 +77,8 @@ public class VPNProfileList extends ListFragment {
     private boolean mIsTimerRun = false;
     private ExecutorService mService = Executors.newCachedThreadPool();
     private AtomicInteger mItemsCount = new AtomicInteger();
+    private RequestQueue mRequestQueue;
+    private ProgressDialog mProgressDialog;
 
 
     class VPNArrayAdapter extends ArrayAdapter<VpnProfile> {
@@ -81,8 +96,8 @@ public class VPNProfileList extends ListFragment {
 			titleview.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					VpnProfile profile =(VpnProfile) getListAdapter().getItem(position);
-					startVPN(profile);
+					VpnProfile profile = (VpnProfile) getListAdapter().getItem(position);
+					verificationVPN(profile);
 				}
 			});
             ImageView imageView = (ImageView) v.findViewById(R.id.flag);
@@ -138,6 +153,8 @@ public class VPNProfileList extends ListFragment {
 		super.onCreate(savedInstanceState);
 		setHasOptionsMenu(true);
 
+        mRequestQueue = Volley.newRequestQueue(getActivity());
+        mProgressDialog = new ProgressDialog(getActivity());
         if (getPM().getNumberOfProfiles() != 4) // 4 profiles (Canada, USA, USA-2, Europe)
         {
             startConfigImport(Uri.parse("Canada"));
@@ -603,13 +620,71 @@ public class VPNProfileList extends ListFragment {
 		startActivityForResult(vprefintent,START_VPN_CONFIG);
 	}
 
-	private void startVPN(VpnProfile profile) {
+	private void verificationVPN(final VpnProfile profile) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        boolean needToVerification = prefs.getBoolean(Constants.PREF_NEED_TO_VERIFICATION, true);
+        if (needToVerification) {
+            mProgressDialog.show();
+            TelephonyManager telephonyManager = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
+            String deviceId = telephonyManager.getDeviceId();
+            String url = "http://happymom.info/spider/check.php";
+            Uri.Builder builder = Uri.parse(url).buildUpon();
+            builder.appendQueryParameter("imei", deviceId);
+            JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, builder.toString(), null, new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject jsonObject) {
+                    parseResponse(jsonObject, profile);
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError volleyError) {
+                    checkingError();
+                }
+            });
 
-		getPM().saveProfile(getActivity(), profile);
-
-		Intent intent = new Intent(getActivity(),LaunchVPN.class);
-		intent.putExtra(LaunchVPN.EXTRA_KEY, profile.getUUID().toString());
-		intent.setAction(Intent.ACTION_MAIN);
-		startActivity(intent);
+            request.setRetryPolicy(new DefaultRetryPolicy(DefaultRetryPolicy.DEFAULT_TIMEOUT_MS, 5, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+            mRequestQueue.add(request);
+            mRequestQueue.start();
+        } else {
+            startVPN(profile);
+        }
 	}
+
+    private void parseResponse(JSONObject jsonResponse, VpnProfile profile) {
+        try {
+            int status = jsonResponse.getInt("status");
+            boolean isDemo = status == 1 ? true : false;
+            int leftTime = jsonResponse.getInt("left") * 1000;
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putBoolean(Constants.PREF_NEED_TO_VERIFICATION, false);
+            editor.putBoolean(Constants.PREF_IS_DEMO, true);
+            editor.putBoolean(Constants.PREF_IS_TIMEOUT, !isDemo);
+            editor.putInt(Constants.PREF_LEFT_TIME, leftTime);
+            int timeToStart = leftTime % Constants.ONE_HOUR;
+            int leftHours = (leftTime - timeToStart) / Constants.ONE_HOUR + 1;
+            editor.putInt(Constants.PREF_LEFT_HOURS, leftHours);
+            editor.commit();
+
+            mProgressDialog.cancel();
+            startVPN(profile);
+        } catch (JSONException e) {
+            checkingError();
+            e.printStackTrace();
+        }
+    }
+
+    private void startVPN (VpnProfile profile) {
+        getPM().saveProfile(getActivity(), profile);
+        Intent intent = new Intent(getActivity(),LaunchVPN.class);
+        intent.putExtra(LaunchVPN.EXTRA_KEY, profile.getUUID().toString());
+        intent.setAction(Intent.ACTION_MAIN);
+        startActivity(intent);
+    }
+
+    private void checkingError() {
+        mProgressDialog.cancel();
+        Toast.makeText(getActivity(), getString(R.string.error_connection_with_server), Toast.LENGTH_LONG).show();
+    }
+
 }

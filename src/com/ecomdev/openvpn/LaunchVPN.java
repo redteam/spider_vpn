@@ -190,9 +190,10 @@ public class LaunchVPN extends Activity {
 			if(resultCode == Activity.RESULT_OK) {
 				int needpw = mSelectedProfile.needUserPWInput();
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-                boolean isTimeOut = prefs.getBoolean(Constants.PREF_IS_TIMEOUT, false);
+                boolean isDemo = prefs.getBoolean(Constants.PREF_IS_DEMO, true);
+				boolean isTimeOut = prefs.getBoolean(Constants.PREF_IS_TIMEOUT, false);
 
-                if(isTimeOut && needpw !=0) {
+                if((!isDemo || isTimeOut) && needpw !=0) {
 					VpnStatus.updateStateString("USER_VPN_PASSWORD", "", R.string.state_user_vpn_password,
                             ConnectionStatus.LEVEL_WAITING_FOR_USER_INPUT);
 					askForPW(needpw);

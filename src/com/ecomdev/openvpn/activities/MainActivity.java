@@ -38,9 +38,7 @@ public class MainActivity extends Activity {
             int leftHours = intent.getIntExtra(Constants.LEFT_HOURS, demoHours);
             if (leftHours == 0) {
                 timeOut();
-                View actionView = mDemoTimeMenuItem.getActionView();
-                TextView timeView = (TextView) actionView.findViewById(R.id.demoTime);
-                timeView.setVisibility(View.GONE);
+                mDemoTimeMenuItem.setVisible(false);
             }
 
             updateDemoHours(leftHours);
@@ -162,12 +160,12 @@ public class MainActivity extends Activity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.demo_menu, menu);
         mDemoTimeMenuItem = menu.findItem(R.id.menuDemoTime);
-
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean isTimeOut = prefs.getBoolean(Constants.PREF_IS_TIMEOUT, false);
-        boolean isDemo = prefs.getBoolean(Constants.PREF_IS_DEMO, true);
+        boolean isDemo = prefs.getBoolean(Constants.PREF_IS_DEMO, false);
         boolean isUserLogged = prefs.getBoolean(Constants.PREF_USER_LOGGED, false);
-        if (isDemo) {
+        if (isUserLogged && isDemo && !isTimeOut) {
+            mDemoTimeMenuItem.setVisible(true);
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
             int hour = preferences.getInt(Constants.PREF_LEFT_HOURS, getResources().getInteger(R.integer.demoTime));
             View actionView = mDemoTimeMenuItem.getActionView();
@@ -175,15 +173,7 @@ public class MainActivity extends Activity {
             timeView.setText(hour + "h");
         }
 
-        if (isUserLogged && !isDemo) {
-            mDemoTimeMenuItem.setVisible(false);
-        } else if (isTimeOut) {
-            View actionView = mDemoTimeMenuItem.getActionView();
-            TextView timeView = (TextView) actionView.findViewById(R.id.demoTime);
-            timeView.setVisibility(View.GONE);
-        }
-
-
         return super.onCreateOptionsMenu(menu);
     }
+
 }

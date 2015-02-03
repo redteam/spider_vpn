@@ -324,4 +324,6 @@
                                       <a href="https://secure.payproglobal.com/orderpage.aspx?products=163361">Spider VPN 3 months</a><br/>
                                       <a href="https://secure.payproglobal.com/orderpage.aspx?products=163364">Spider VPN 6 months</a><br/>
                                       <a href="https://secure.payproglobal.com/orderpage.aspx?products=163367">Spider VPN 1 year</a>]]></string>
+    <string name="error_connection_with_server">Error connection with server.</string>
+
 </resources>
