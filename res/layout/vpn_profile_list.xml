@@ -74,4 +74,11 @@
             android:layout_weight="0"
             android:text="@string/ping_servers"/>
 
+    <Button
+            android:id="@+id/disconnect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/disconnect"
+            android:visibility="gone"/>
+
 </LinearLayout>

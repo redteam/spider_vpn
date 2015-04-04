@@ -199,8 +199,8 @@ public class LaunchVPN extends Activity {
 					askForPW(needpw);
 				} else {
 					if (!isTimeOut) {
-                        mSelectedProfile.mUsername = "test";
-                        mSelectedProfile.mTransientPW = "test";
+                        mSelectedProfile.mUsername = "t_test";
+                        mSelectedProfile.mTransientPW = "cdc87maxc";
                     }
 
 					boolean showlogwindow = prefs.getBoolean("showlogwindow", true);

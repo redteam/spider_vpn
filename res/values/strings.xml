@@ -315,6 +315,7 @@
     <string name="ping_servers">Find Fastest server for me</string>
     <string name="fastest_server">Fastest for you</string>
     <string name="disconnected">Disconnected</string>
+    <string name="disconnect">Disconnect</string>
     <string name="demo_hours">24h</string>
     <string name="title_demo_dialog">Trial period was expired.</string>
     <string name="trial_dialog_message">Thank you for using Spider VPN! \nUnfortunately, Your trial period was expired. \nNow  you can select your Spider VPN plan:</string>

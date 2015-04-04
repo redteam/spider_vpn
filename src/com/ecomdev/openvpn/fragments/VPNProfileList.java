@@ -36,6 +36,7 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.ecomdev.openvpn.*;
 import com.ecomdev.openvpn.activities.ConfigConverter;
+import com.ecomdev.openvpn.activities.DisconnectVPN;
 import com.ecomdev.openvpn.activities.FileSelect;
 import com.ecomdev.openvpn.activities.VPNPreferences;
 import com.ecomdev.openvpn.core.ProfileManager;
@@ -73,6 +74,7 @@ public class VPNProfileList extends ListFragment {
 	private static final int MENU_IMPORT_PROFILE = Menu.FIRST +1;
     private Map<String, Drawable> mFlags = new HashMap<String, Drawable>(4);
     private Button mPingServers;
+    private Button mDisconnect;
     private Timer mTimer;
     private boolean mIsTimerRun = false;
     private ExecutorService mService = Executors.newCachedThreadPool();
@@ -155,18 +157,20 @@ public class VPNProfileList extends ListFragment {
 
         mRequestQueue = Volley.newRequestQueue(getActivity());
         mProgressDialog = new ProgressDialog(getActivity());
-        if (getPM().getNumberOfProfiles() != 4) // 4 profiles (Canada, USA, USA-2, Europe)
+        if (getPM().getNumberOfProfiles() != 5) // 4 profiles (Canada, USA, USA-2, Europe)
         {
             startConfigImport(Uri.parse("Canada"));
             startConfigImport(Uri.parse("Europe"));
             startConfigImport(Uri.parse("USA"));
             startConfigImport(Uri.parse("USA-2"));
+            startConfigImport(Uri.parse("Singapore"));
         }
 
         mFlags.put("Canada", getResources().getDrawable(R.drawable.canada_flag));
         mFlags.put("Europe", getResources().getDrawable(R.drawable.europe_flag));
         mFlags.put("USA", getResources().getDrawable(R.drawable.usa_flag));
         mFlags.put("USA-2", getResources().getDrawable(R.drawable.usa_flag));
+        mFlags.put("Singapore", getResources().getDrawable(R.drawable.singapore_flag));
 	}
 
 
@@ -213,6 +217,14 @@ public class VPNProfileList extends ListFragment {
                 checkConnectionSpeedToServer();
             }
         });
+        mDisconnect = (Button) v.findViewById(R.id.disconnect);
+        mDisconnect.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getActivity(),DisconnectVPN.class);
+                startActivity(intent);
+            }
+        });
 
         VpnStatus.addStateListener(new VpnStatus.StateListener() {
             @Override
@@ -226,9 +238,11 @@ public class VPNProfileList extends ListFragment {
                             case R.string.state_user_vpn_password:
                             case R.string.state_nonetwork:
                                 mPingServers.setEnabled(true);
+                                mDisconnect.setVisibility(View.GONE);
                                 break;
                             case R.string.state_connected:
                                 mPingServers.setEnabled(false);
+                                mDisconnect.setVisibility(View.VISIBLE);
                                 break;
                         }
                     }
@@ -414,6 +428,7 @@ public class VPNProfileList extends ListFragment {
             mArrayadapter.addAll(sortedset);
 
             setListAdapter(mArrayadapter);
+            mArrayadapter.notifyDataSetChanged();
             mPingServers.setEnabled(true);
             mPingServers.setText(getText(R.string.ping_servers));
         }
