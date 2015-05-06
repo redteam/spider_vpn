@@ -35,5 +35,11 @@
             android:layout_marginRight="4dp"
             />
 
+    <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:autoLink="web"
+            android:text="@string/spider_vpn_url"/>
+
 
 </LinearLayout>
